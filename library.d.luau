@@ -1,5 +1,5 @@
 --!strict
--- Luau type definitions for the Obsidian UI Library
+-- Luau type definitions for the SixSense UI Library
 
 --// Helper & Configuration Types
 export type Scheme = {
