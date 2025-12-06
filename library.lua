@@ -7520,10 +7520,7 @@ function Library:CreateWindow(WindowInfo)
                 Tabs = {},
             }
 
-            function Tabbox:AddTab(Name, Icon)
-                local hasIcon = Icon ~= nil
-                local iconData = hasIcon and Library:GetIcon(Icon) or nil
-                
+            function Tabbox:AddTab(Name)
                 local Button = New("TextButton", {
                     BackgroundColor3 = "MainColor",
                     BackgroundTransparency = 0,
@@ -7531,37 +7528,8 @@ function Library:CreateWindow(WindowInfo)
                     Text = Name,
                     TextSize = 15,
                     TextTransparency = 0.5,
-                    TextXAlignment = hasIcon and Enum.TextXAlignment.Right or Enum.TextXAlignment.Center,
                     Parent = TabboxButtons,
                 })
-                
-                -- Add icon if provided (positioned to the left of text)
-                local TabIcon = nil
-                if hasIcon and iconData then
-                    -- Add padding to make room for icon
-                    New("UIPadding", {
-                        PaddingLeft = UDim.new(0, 6),
-                        PaddingRight = UDim.new(0, 6),
-                        Parent = Button,
-                    })
-                    
-                    TabIcon = New("ImageLabel", {
-                        Name = "TabIcon",
-                        BackgroundTransparency = 1,
-                        Size = UDim2.fromOffset(14, 14),
-                        Position = UDim2.new(0, 0, 0.5, 0),
-                        AnchorPoint = Vector2.new(0, 0.5),
-                        Image = iconData.Url or "",
-                        ImageRectOffset = iconData.ImageRectOffset or Vector2.zero,
-                        ImageRectSize = iconData.ImageRectSize or Vector2.zero,
-                        ImageColor3 = "FontColor",
-                        ImageTransparency = 0.5,
-                        Parent = Button,
-                    })
-                    
-                    -- Adjust text position to account for icon
-                    Button.TextXAlignment = Enum.TextXAlignment.Center
-                end
 
                 local Line = Library:MakeLine(Button, {
                     AnchorPoint = Vector2.new(0, 1),
@@ -7605,10 +7573,6 @@ function Library:CreateWindow(WindowInfo)
                     Button.BackgroundTransparency = 1
                     Button.TextTransparency = 0
                     Line.Visible = false
-                    
-                    if TabIcon then
-                        TabIcon.ImageTransparency = 0
-                    end
 
                     Container.Visible = true
 
@@ -7620,11 +7584,6 @@ function Library:CreateWindow(WindowInfo)
                     Button.BackgroundTransparency = 0
                     Button.TextTransparency = 0.5
                     Line.Visible = true
-                    
-                    if TabIcon then
-                        TabIcon.ImageTransparency = 0.5
-                    end
-                    
                     Container.Visible = false
 
                     Tabbox.ActiveTab = nil
