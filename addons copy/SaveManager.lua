@@ -209,27 +209,6 @@ local SaveManager = {} do
             objects = {}
         }
 
-        -- Save menu toggle keybind
-        if self.Library.ToggleKeybind then
-            if typeof(self.Library.ToggleKeybind) == "table" and self.Library.ToggleKeybind.Type == "KeyPicker" then
-                -- If it's a KeyPicker object
-                table.insert(data.objects, {
-                    type = "MenuKeybind",
-                    idx = "__MenuToggle",
-                    mode = self.Library.ToggleKeybind.Mode,
-                    key = self.Library.ToggleKeybind.Value,
-                    modifiers = self.Library.ToggleKeybind.Modifiers
-                })
-            elseif typeof(self.Library.ToggleKeybind) == "EnumItem" then
-                -- If it's a KeyCode enum
-                table.insert(data.objects, {
-                    type = "MenuKeybind",
-                    idx = "__MenuToggle",
-                    key = self.Library.ToggleKeybind.Name
-                })
-            end
-        end
-
         for idx, toggle in pairs(self.Library.Toggles) do
             if not toggle.Type then continue end
             if not self.Parser[toggle.Type] then continue end
@@ -273,24 +252,6 @@ local SaveManager = {} do
 
         for _, option in pairs(decoded.objects) do
             if not option.type then continue end
-            
-            -- Handle menu toggle keybind
-            if option.type == "MenuKeybind" and option.idx == "__MenuToggle" then
-                if option.mode then
-                    -- It's a KeyPicker format
-                    if self.Library.ToggleKeybind and typeof(self.Library.ToggleKeybind) == "table" and self.Library.ToggleKeybind.SetValue then
-                        self.Library.ToggleKeybind:SetValue({ option.key, option.mode, option.modifiers })
-                    end
-                elseif option.key then
-                    -- It's a simple KeyCode format
-                    local keyCode = Enum.KeyCode[option.key]
-                    if keyCode then
-                        self.Library.ToggleKeybind = keyCode
-                    end
-                end
-                continue
-            end
-            
             if not self.Parser[option.type] then continue end
             if self.Ignore[option.idx] then continue end
 
@@ -443,110 +404,6 @@ local SaveManager = {} do
         return true, ""
     end
 
-    --// Export, Import \\--
-    function SaveManager:ExportConfig()
-        local data = {
-            objects = {}
-        }
-
-        -- Save menu toggle keybind
-        if self.Library.ToggleKeybind then
-            if typeof(self.Library.ToggleKeybind) == "table" and self.Library.ToggleKeybind.Type == "KeyPicker" then
-                -- If it's a KeyPicker object
-                table.insert(data.objects, {
-                    type = "MenuKeybind",
-                    idx = "__MenuToggle",
-                    mode = self.Library.ToggleKeybind.Mode,
-                    key = self.Library.ToggleKeybind.Value,
-                    modifiers = self.Library.ToggleKeybind.Modifiers
-                })
-            elseif typeof(self.Library.ToggleKeybind) == "EnumItem" then
-                -- If it's a KeyCode enum
-                table.insert(data.objects, {
-                    type = "MenuKeybind",
-                    idx = "__MenuToggle",
-                    key = self.Library.ToggleKeybind.Name
-                })
-            end
-        end
-
-        for idx, toggle in pairs(self.Library.Toggles) do
-            if not toggle.Type then continue end
-            if not self.Parser[toggle.Type] then continue end
-            if self.Ignore[idx] then continue end
-
-            table.insert(data.objects, self.Parser[toggle.Type].Save(idx, toggle))
-        end
-
-        for idx, option in pairs(self.Library.Options) do
-            if not option.Type then continue end
-            if not self.Parser[option.Type] then continue end
-            if self.Ignore[idx] then continue end
-
-            table.insert(data.objects, self.Parser[option.Type].Save(idx, option))
-        end
-
-        local success, encoded = pcall(HttpService.JSONEncode, HttpService, data)
-        if not success then
-            return false, "failed to encode data"
-        end
-
-        -- Base64 encode the JSON string
-        local base64Encoded = HttpService:Base64Encode(encoded)
-        return true, base64Encoded
-    end
-
-    function SaveManager:ImportConfig(configString)
-        if not configString or configString == "" then
-            return false, "empty config string"
-        end
-
-        -- Base64 decode the string
-        local success, decoded = pcall(HttpService.Base64Decode, HttpService, configString)
-        if not success then
-            return false, "invalid config string (decode error)"
-        end
-
-        -- JSON decode the data
-        local jsonSuccess, data = pcall(HttpService.JSONDecode, HttpService, decoded)
-        if not jsonSuccess then
-            return false, "invalid config format (parse error)"
-        end
-
-        if not data.objects then
-            return false, "invalid config structure"
-        end
-
-        -- Load the config data
-        for _, option in pairs(data.objects) do
-            if not option.type then continue end
-            
-            -- Handle menu toggle keybind
-            if option.type == "MenuKeybind" and option.idx == "__MenuToggle" then
-                if option.mode then
-                    -- It's a KeyPicker format
-                    if self.Library.ToggleKeybind and typeof(self.Library.ToggleKeybind) == "table" and self.Library.ToggleKeybind.SetValue then
-                        self.Library.ToggleKeybind:SetValue({ option.key, option.mode, option.modifiers })
-                    end
-                elseif option.key then
-                    -- It's a simple KeyCode format
-                    local keyCode = Enum.KeyCode[option.key]
-                    if keyCode then
-                        self.Library.ToggleKeybind = keyCode
-                    end
-                end
-                continue
-            end
-            
-            if not self.Parser[option.type] then continue end
-            if self.Ignore[option.idx] then continue end
-
-            task.spawn(self.Parser[option.type].Load, option.idx, option)
-        end
-
-        return true
-    end
-
     --// GUI \\--
     function SaveManager:BuildConfigSection(tab)
         assert(self.Library, "Must set SaveManager.Library")
@@ -643,46 +500,8 @@ local SaveManager = {} do
 
         self.AutoloadConfigLabel = section:AddLabel("Current autoload config: " .. self:GetAutoloadConfig(), true)
 
-        section:AddDivider()
-
-        section:AddButton("Export config", function()
-            local success, result = self:ExportConfig()
-            if not success then
-                self.Library:Notify("Failed to export config: " .. result)
-                return
-            end
-
-            if setclipboard then
-                setclipboard(result)
-                self.Library:Notify("Config exported to clipboard!")
-            else
-                self.Library:Notify("Config exported (clipboard not supported)")
-                print("Exported Config String:")
-                print(result)
-            end
-        end)
-
-        section:AddInput("SaveManager_ImportString", { Text = "Import string" })
-        section:AddButton("Import config", function()
-            local importString = self.Library.Options.SaveManager_ImportString.Value
-
-            if importString:gsub(" ", "") == "" then
-                self.Library:Notify("Import string is empty", 2)
-                return
-            end
-
-            local success, err = self:ImportConfig(importString)
-            if not success then
-                self.Library:Notify("Failed to import config: " .. err)
-                return
-            end
-
-            self.Library:Notify("Config imported successfully!")
-            self.Library.Options.SaveManager_ImportString:SetValue("")
-        end)
-
         -- self:LoadAutoloadConfig()
-        self:SetIgnoreIndexes({ "SaveManager_ConfigList", "SaveManager_ConfigName", "SaveManager_ImportString" })
+        self:SetIgnoreIndexes({ "SaveManager_ConfigList", "SaveManager_ConfigName" })
     end
 
     SaveManager:BuildFolderTree()

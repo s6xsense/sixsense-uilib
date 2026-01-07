@@ -701,9 +701,56 @@ SaveManager:SetLibrary(Library)
 -- (we dont want configs to save themes, do we?)
 SaveManager:IgnoreThemeSettings()
 
--- Adds our MenuKeybind to the ignore list
--- (do you want each config to have a different menu key? probably not.)
-SaveManager:SetIgnoreIndexes({ "MenuKeybind" })
+-- Note: MenuKeybind is now saved in configs automatically!
+-- If you want to exclude it from being saved, uncomment the line below:
+-- SaveManager:SetIgnoreIndexes({ "MenuKeybind" })
+
+-- Example: Manual Export/Import (Alternative way)
+local ExportImportBox = Tabs["UI Settings"]:AddRightGroupbox("Export / Import Config", "arrow-left-right")
+
+ExportImportBox:AddButton("Export current config", function()
+	local success, result = SaveManager:ExportConfig()
+	if not success then
+		Library:Notify("Failed to export: " .. result, 3)
+		return
+	end
+	
+	if setclipboard then
+		setclipboard(result)
+		Library:Notify("Config exported to clipboard!", 3)
+	else
+		Library:Notify("Config exported! Check console", 3)
+		print("=== EXPORTED CONFIG STRING ===")
+		print(result)
+		print("===============================")
+	end
+end)
+
+ExportImportBox:AddDivider()
+
+ExportImportBox:AddInput("ManualImportString", {
+	Default = "",
+	Text = "Paste config string here",
+	Placeholder = "Paste encoded string...",
+})
+
+ExportImportBox:AddButton("Import config", function()
+	local importString = Options.ManualImportString.Value
+	
+	if importString:gsub(" ", "") == "" then
+		Library:Notify("Import string is empty!", 2)
+		return
+	end
+	
+	local success, err = SaveManager:ImportConfig(importString)
+	if not success then
+		Library:Notify("Import failed: " .. err, 3)
+		return
+	end
+	
+	Library:Notify("Config imported successfully!", 3)
+	Options.ManualImportString:SetValue("")
+end)
 
 -- use case for doing it this way:
 -- a script hub could have themes in a global folder
