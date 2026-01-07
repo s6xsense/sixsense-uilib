@@ -626,21 +626,20 @@ local SaveManager = {} do
         end)
 
         section:AddButton("Import from clipboard", function()
+            if not (getclipboard or toclipboard or setclipboard) then
+                self.Library:Notify("Clipboard not supported by executor", 2)
+                return
+            end
+
             local importString = ""
+            local success, result = pcall(function()
+                return getclipboard()
+            end)
             
-            -- Try multiple clipboard function names
-            local clipboardFunc = getclipboard or get_clipboard or GetClipboard
-            
-            if clipboardFunc then
-                local success, result = pcall(clipboardFunc)
-                if success then
-                    importString = result
-                else
-                    self.Library:Notify("Failed to read clipboard", 2)
-                    return
-                end
+            if success and result then
+                importString = result
             else
-                self.Library:Notify("Clipboard not supported", 2)
+                self.Library:Notify("Failed to read clipboard", 2)
                 return
             end
 
@@ -649,13 +648,13 @@ local SaveManager = {} do
                 return
             end
 
-            local success, err = self:ImportConfig(importString)
-            if not success then
-                self.Library:Notify("Failed to import config: " .. err)
+            local importSuccess, err = self:ImportConfig(importString)
+            if not importSuccess then
+                self.Library:Notify("Failed to import: " .. err, 3)
                 return
             end
 
-            self.Library:Notify("Config imported successfully!")
+            self.Library:Notify("Config imported successfully!", 3)
         end)
 
         section:AddDivider()
