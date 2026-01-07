@@ -634,11 +634,11 @@ local SaveManager = {} do
                 if success and result and type(result) == "string" then
                     importString = result
                 else
-                    self.Library:Notify("Clipboard not supported or empty", 2)
+                    self.Library:Notify("Failed to read clipboard - use textbox below", 2)
                     return
                 end
             else
-                self.Library:Notify("Clipboard not supported by executor", 2)
+                self.Library:Notify("Clipboard not supported - use textbox below", 2)
                 return
             end
 
@@ -656,6 +656,31 @@ local SaveManager = {} do
             end
 
             self.Library:Notify("Config imported successfully!", 3)
+        end)
+
+        -- Fallback: Manual textbox for executors without getclipboard
+        section:AddInput("SaveManager_ImportString", {
+            Text = "Or paste config here",
+            Placeholder = "Paste encrypted string..."
+        })
+        
+        section:AddButton("Import from textbox", function()
+            local importString = self.Library.Options.SaveManager_ImportString.Value
+
+            if importString:gsub(" ", "") == "" then
+                self.Library:Notify("Textbox is empty", 2)
+                return
+            end
+
+            local importSuccess, err = self:ImportConfig(importString)
+            if not importSuccess then
+                self.Library:Notify("Invalid configuration", 3)
+                print("Import error:", err)
+                return
+            end
+
+            self.Library:Notify("Config imported successfully!", 3)
+            self.Library.Options.SaveManager_ImportString:SetValue("")
         end)
 
         section:AddDivider()
@@ -729,7 +754,7 @@ local SaveManager = {} do
         self.AutoloadConfigLabel = section:AddLabel("Current autoload config: " .. self:GetAutoloadConfig(), true)
 
         -- self:LoadAutoloadConfig()
-        self:SetIgnoreIndexes({ "SaveManager_ConfigList", "SaveManager_ConfigName" })
+        self:SetIgnoreIndexes({ "SaveManager_ConfigList", "SaveManager_ConfigName", "SaveManager_ImportString" })
     end
 
     SaveManager:BuildFolderTree()
