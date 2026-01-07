@@ -566,6 +566,47 @@ local SaveManager = {} do
             self.Library.Options.SaveManager_ConfigList:SetValue(nil)
         end)
 
+        section:AddButton("Export config", function()
+            local success, result = self:ExportConfig()
+            if not success then
+                self.Library:Notify("Failed to export config: " .. result)
+                return
+            end
+
+            if setclipboard then
+                setclipboard(result)
+                self.Library:Notify("Config exported to clipboard!")
+            else
+                self.Library:Notify("Config exported (clipboard not supported)")
+                print("Exported Config String:")
+                print(result)
+            end
+        end)
+
+        section:AddButton("Import from clipboard", function()
+            local importString = ""
+            
+            if getclipboard then
+                importString = getclipboard()
+            else
+                self.Library:Notify("Clipboard not supported", 2)
+                return
+            end
+
+            if importString:gsub(" ", "") == "" then
+                self.Library:Notify("Clipboard is empty", 2)
+                return
+            end
+
+            local success, err = self:ImportConfig(importString)
+            if not success then
+                self.Library:Notify("Failed to import config: " .. err)
+                return
+            end
+
+            self.Library:Notify("Config imported successfully!")
+        end)
+
         section:AddDivider()
 
         section:AddDropdown("SaveManager_ConfigList", { Text = "Config list", Values = self:RefreshConfigList(), AllowNull = true })
@@ -636,46 +677,8 @@ local SaveManager = {} do
 
         self.AutoloadConfigLabel = section:AddLabel("Current autoload config: " .. self:GetAutoloadConfig(), true)
 
-        section:AddDivider()
-
-        section:AddButton("Export config", function()
-            local success, result = self:ExportConfig()
-            if not success then
-                self.Library:Notify("Failed to export config: " .. result)
-                return
-            end
-
-            if setclipboard then
-                setclipboard(result)
-                self.Library:Notify("Config exported to clipboard!")
-            else
-                self.Library:Notify("Config exported (clipboard not supported)")
-                print("Exported Config String:")
-                print(result)
-            end
-        end)
-
-        section:AddInput("SaveManager_ImportString", { Text = "Import string" })
-        section:AddButton("Import config", function()
-            local importString = self.Library.Options.SaveManager_ImportString.Value
-
-            if importString:gsub(" ", "") == "" then
-                self.Library:Notify("Import string is empty", 2)
-                return
-            end
-
-            local success, err = self:ImportConfig(importString)
-            if not success then
-                self.Library:Notify("Failed to import config: " .. err)
-                return
-            end
-
-            self.Library:Notify("Config imported successfully!")
-            self.Library.Options.SaveManager_ImportString:SetValue("")
-        end)
-
         -- self:LoadAutoloadConfig()
-        self:SetIgnoreIndexes({ "SaveManager_ConfigList", "SaveManager_ConfigName", "SaveManager_ImportString" })
+        self:SetIgnoreIndexes({ "SaveManager_ConfigList", "SaveManager_ConfigName" })
     end
 
     SaveManager:BuildFolderTree()
