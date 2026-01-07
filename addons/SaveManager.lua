@@ -625,46 +625,13 @@ local SaveManager = {} do
             end
         end)
 
-        section:AddButton("Import from clipboard", function()
-            -- Get clipboard content
-            local importString = ""
-            
-            if getclipboard then
-                local success, result = pcall(getclipboard)
-                if success and result and type(result) == "string" then
-                    importString = result
-                else
-                    self.Library:Notify("Failed to read clipboard - use textbox below", 2)
-                    return
-                end
-            else
-                self.Library:Notify("Clipboard not supported - use textbox below", 2)
-                return
-            end
-
-            -- Validate and import
-            if importString:gsub(" ", "") == "" then
-                self.Library:Notify("Clipboard is empty", 2)
-                return
-            end
-
-            local importSuccess, err = self:ImportConfig(importString)
-            if not importSuccess then
-                self.Library:Notify("Invalid configuration", 3)
-                print("Import error details:", err)
-                return
-            end
-
-            self.Library:Notify("Config imported successfully!", 3)
-        end)
-
         -- Fallback: Manual textbox for executors without getclipboard
         section:AddInput("SaveManager_ImportString", {
-            Text = "Or paste config here",
-            Placeholder = "Paste encrypted string..."
+            Text = "Import config",
+            Placeholder = "Paste config here..."
         })
         
-        section:AddButton("Import from textbox", function()
+        section:AddButton("Import config", function()
             local importString = self.Library.Options.SaveManager_ImportString.Value
 
             if importString:gsub(" ", "") == "" then
