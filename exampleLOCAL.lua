@@ -67,6 +67,54 @@ local LeftGroupBox = Tabs.Main:AddLeftGroupbox("Groupbox", "boxes")
 -- We can also get our Main tab via the following code:
 -- local LeftGroupBox = Window.Tabs.Main:AddLeftGroupbox("Groupbox", "boxes")
 
+-- Accordion Example (NEW!)
+-- Accordions are collapsible containers with smooth animations
+-- They work just like Groupboxes but can be toggled open/closed
+local LeftAccordion = Tabs.Main:AddLeftAccordion("Accordion Example", "chevron-down")
+
+-- You can add any elements to an accordion just like a groupbox
+LeftAccordion:AddToggle("AccordionToggle1", {
+	Text = "Toggle inside accordion",
+	Default = false,
+	Callback = function(Value)
+		print("Accordion toggle:", Value)
+	end,
+})
+
+LeftAccordion:AddSlider("AccordionSlider", {
+	Text = "Accordion Slider",
+	Default = 50,
+	Min = 0,
+	Max = 100,
+	Rounding = 0,
+	Callback = function(Value)
+		print("Accordion slider value:", Value)
+	end,
+})
+
+LeftAccordion:AddButton({
+	Text = "Button in Accordion",
+	Func = function()
+		print("Accordion button clicked!")
+	end,
+})
+
+LeftAccordion:AddLabel("This is a label inside the accordion!\nAccordions have smooth animations when toggling.")
+
+-- Another accordion example on the right side
+local RightAccordion = Tabs.Main:AddRightAccordion("Settings Accordion", "settings")
+
+RightAccordion:AddToggle("AccordionToggle2", {
+	Text = "Enable Feature",
+	Default = true,
+})
+
+RightAccordion:AddInput("AccordionInput", {
+	Default = "Type here...",
+	Text = "Input Field",
+	Placeholder = "Enter text",
+})
+
 -- Tabboxes are a tiny bit different, but here's a basic example:
 --[[
 
@@ -704,53 +752,6 @@ SaveManager:IgnoreThemeSettings()
 -- Note: MenuKeybind is now saved in configs automatically!
 -- If you want to exclude it from being saved, uncomment the line below:
 -- SaveManager:SetIgnoreIndexes({ "MenuKeybind" })
-
--- Example: Manual Export/Import (Alternative way)
-local ExportImportBox = Tabs["UI Settings"]:AddRightGroupbox("Export / Import Config", "arrow-left-right")
-
-ExportImportBox:AddButton("Export current config", function()
-	local success, result = SaveManager:ExportConfig()
-	if not success then
-		Library:Notify("Failed to export: " .. result, 3)
-		return
-	end
-	
-	if setclipboard then
-		setclipboard(result)
-		Library:Notify("Config exported to clipboard!", 3)
-	else
-		Library:Notify("Config exported! Check console", 3)
-		print("=== EXPORTED CONFIG STRING ===")
-		print(result)
-		print("===============================")
-	end
-end)
-
-ExportImportBox:AddDivider()
-
-ExportImportBox:AddInput("ManualImportString", {
-	Default = "",
-	Text = "Paste config string here",
-	Placeholder = "Paste encoded string...",
-})
-
-ExportImportBox:AddButton("Import config", function()
-	local importString = Options.ManualImportString.Value
-	
-	if importString:gsub(" ", "") == "" then
-		Library:Notify("Import string is empty!", 2)
-		return
-	end
-	
-	local success, err = SaveManager:ImportConfig(importString)
-	if not success then
-		Library:Notify("Import failed: " .. err, 3)
-		return
-	end
-	
-	Library:Notify("Config imported successfully!", 3)
-	Options.ManualImportString:SetValue("")
-end)
 
 -- use case for doing it this way:
 -- a script hub could have themes in a global folder

@@ -4,10 +4,10 @@
 -- example script by https://github.com/mstudio45/LinoriaLib/blob/main/Example.lua and modified by deivid
 -- You can suggest changes with a pull request or something
 
-local repo = "https://raw.githubusercontent.com/xXehub/sixsense-uilib/main/"
-local Library = loadstring(game:HttpGet(repo .. "library.lua"))()
-local ThemeManager = loadstring(game:HttpGet(repo .. "addons/ThemeManager.lua"))()
-local SaveManager = loadstring(game:HttpGet(repo .. "addons/SaveManager.lua"))()
+-- Development Mode: Loading from local files (Seliware workspace path)
+local Library = loadstring(readfile("sixsense-uilib/library.lua"))()
+local ThemeManager = loadstring(readfile("sixsense-uilib/addons/ThemeManager.lua"))()
+local SaveManager = loadstring(readfile("sixsense-uilib/addons/SaveManager.lua"))()
 
 local Options = Library.Options
 local Toggles = Library.Toggles
